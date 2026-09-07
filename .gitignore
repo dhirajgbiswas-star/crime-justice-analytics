@@ -1,0 +1,38 @@
+.venv/
+.mplconfig/
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+*.pyc
+.python-version
+.env
+.env.*
+!.env.example
+
+# Local logs
+logs/
+*.log
+
+# Official source workbooks, SQLite, CSV extracts and other data files
+data/*
+!data/README.md
+*.csv
+*.xlsx
+*.xls
+*.xlsm
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated analysis outputs
+reports/generated/
+dashboard/tableau-public/data/
+dashboard/tableau-public/*.html
+dashboard/tableau-public/*.twb
+dashboard/tableau-public/*.twbx
+
+# Editor and local prompt notes
+docs/CURSOR_PROMPT.md
+.cursor/
+*.canvas.tsx

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Victorian Crime &amp; Justice Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,650&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --navy: #1B365D;
+      --navy-deep: #0E2140;
+      --teal: #2A6F7F;
+      --slate: #5B6B7A;
+      --gold: #C4A35A;
+      --rust: #A15C38;
+      --green: #3E6B4F;
+      --grey: #D6D9DE;
+      --paper: #F3EEE4;
+      --card: #FFFDF8;
+      --ink: #1A2433;
+      --line: #E4D8C6;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    body { min-height: 100vh; }
+    .masthead {
+      background: var(--navy-deep);
+      color: white;
+      padding: 20px 36px 0;
+    }
+    .masthead-top { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+    .kicker { letter-spacing: 0.18em; text-transform: uppercase; font-size: 10px; color: var(--gold); font-weight: 600; margin: 0 0 10px; }
+    h1 { font-family: Fraunces, Georgia, serif; font-weight: 650; font-size: clamp(28px, 3vw, 40px); margin: 0 0 8px; letter-spacing: -0.03em; }
+    .subtitle { margin: 0; color: #C9D3DE; font-size: 14px; max-width: 720px; line-height: 1.5; }
+    .meta-chip { font-size: 12px; color: #C9D3DE; text-align: right; line-height: 1.65; }
+    .meta-chip strong { color: white; font-weight: 600; }
+    .tabs { display: flex; gap: 0; margin-top: 22px; }
+    .tab {
+      background: transparent; color: #B7C3D0; border: 0; border-bottom: 3px solid transparent;
+      padding: 13px 18px 11px; font: 600 13px/1 "IBM Plex Sans", sans-serif; cursor: pointer;
+    }
+    .tab:hover { color: white; }
+    .tab.active { color: white; border-bottom-color: var(--gold); }
+    .gold-rule { height: 3px; background: var(--gold); }
+    .filters {
+      display: flex; gap: 22px; align-items: end; flex-wrap: wrap;
+      padding: 16px 36px; background: #EBE3D4; border-bottom: 1px solid var(--line);
+    }
+    label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); display: block; margin-bottom: 6px; }
+    select {
+      font: 500 14px "IBM Plex Sans", sans-serif; color: var(--navy); background: var(--card);
+      border: 1px solid #D3CBBE; padding: 9px 12px; min-width: 188px;
+    }
+    .note { font-size: 12px; color: var(--slate); max-width: 700px; line-height: 1.45; }
+    main { padding: 24px 36px 56px; max-width: 1480px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi {
+      background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--gold);
+      padding: 14px 16px 13px;
+    }
+    .kpi .label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); font-weight: 600; }
+    .kpi .value { font-family: Fraunces, Georgia, serif; font-size: 30px; color: var(--navy); margin: 8px 0 3px; letter-spacing: -0.03em; }
+    .kpi .delta { font-size: 12px; font-weight: 600; }
+    .kpi .delta.up { color: var(--rust); }
+    .kpi .delta.down { color: var(--green); }
+    .kpi .delta.flat { color: var(--slate); }
+    .kpi .hint { font-size: 11px; color: var(--slate); margin-top: 2px; }
+    .grid { display: grid; gap: 14px; margin-bottom: 14px; }
+    .g2 { grid-template-columns: 1.4fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .g21 { grid-template-columns: 1.15fr 0.85fr; }
+    .card { background: var(--card); border: 1px solid var(--line); padding: 10px 10px 6px; min-height: 320px; }
+    .card.tall { min-height: 440px; }
+    .chart { width: 100%; height: 300px; }
+    .chart.tall { height: 420px; }
+    footer { padding: 18px 32px 36px; color: var(--slate); font-size: 12px; border-top: 1px solid var(--line); line-height: 1.55; }
+    footer a { color: var(--navy); }
+    .quality-grid { display: grid; grid-template-columns: 280px 1fr; gap: 14px; }
+    .score-card { background: var(--navy); color: white; padding: 28px 24px; }
+    .score-card .big { font-family: Fraunces, Georgia, serif; font-size: 64px; color: var(--gold); margin: 8px 0; }
+    .dim-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.12); }
+    table.quality { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.quality th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); padding: 8px; border-bottom: 1px solid var(--line); }
+    table.quality td { padding: 9px 8px; border-bottom: 1px solid var(--line); }
+    .pill { display: inline-block; background: #E7F3EA; color: var(--green); font-weight: 600; padding: 2px 8px; font-size: 12px; }
+    .sources { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+    .sources a { color: var(--teal); }
+    .callout { background: #F7F1E4; border-left: 3px solid var(--gold); padding: 12px 14px; font-size: 13px; color: var(--navy); margin-bottom: 14px; }
+    @media (max-width: 1100px) {
+      .kpis, .g2, .g3, .g21, .quality-grid { grid-template-columns: 1fr; }
+      .filters, .masthead, main, footer { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-top">
+      <div>
+        <p class="kicker">Victoria · CSA · ABS · Open data</p>
+        <h1>Crime &amp; Justice Intelligence</h1>
+        <p class="subtitle">Interactive public dashboard of CSA recorded offences, criminal incidents and alleged offender incidents, plus ABS unique offenders. CSA year ending March 2017–2026. ABS financial years to 2024–25.</p>
+      </div>
+      <div class="meta-chip">
+        Published <strong>19 June 2026</strong><br>
+        Licence <strong>CC BY 4.0</strong><br>
+        Author <strong>Dhiraj Guha</strong>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="geography">Geographic intelligence</button>
+      <button class="tab" data-tab="offenders">Offenders &amp; justice</button>
+      <button class="tab" data-tab="national">National comparison</button>
+      <button class="tab" data-tab="quality">Data quality</button>
+    </nav>
+    <div class="gold-rule"></div>
+  </header>
+  <div class="filters">
+    <div>
+      <label for="year">Year ending March</label>
+      <select id="year"></select>
+    </div>
+    <div>
+      <label for="geo">Geography grouping</label>
+      <select id="geo">
+        <option value="All">All Victoria</option>
+        <option value="Metropolitan">Metropolitan LGAs</option>
+        <option value="Regional">Regional LGAs</option>
+      </select>
+    </div>
+    <p class="note">Year ending March filters CSA charts. The National tab uses ABS financial years and is not filtered by LGA. Do not add CSA products together, and do not compare ABS unique offenders with CSA alleged offender incidents.</p>
+  </div>
+  <main>
+    <section class="panel active" id="overview">
+      <div class="kpis" id="kpis"></div>
+      <div class="grid g2">
+        <div class="card tall"><div id="c-trend" class="chart tall"></div></div>
+        <div class="card tall"><div id="c-products" class="chart tall"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div id="c-yoy" class="chart"></div></div>
+        <div class="card"><div id="c-mix" class="chart"></div></div>
+        <div class="card"><div id="c-divtrend" class="chart"></div></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><div id="c-inv" class="chart"></div></div>
+        <div class="card"><div id="c-family" class="chart"></div></div>
+      </div>
+    </section>
+    <section class="panel" id="geography">
+      <p class="callout">Use rates to compare LGAs. Melbourne leads recorded-offence <em>counts</em> as the activity centre; highest alleged-offender <em>rate</em> in 2026 is Latrobe, not Melbourne.</p>
+      <div class="grid g21">
+        <div class="card tall"><div id="c-map" class="chart tall"></div></div>
+        <div class="card tall"><div id="c-rates" class="chart tall"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div id="c-counts" class="chart"></div></div>
+        <div class="card"><div id="c-scatter" class="chart"></div></div>
+        <div class="card"><div id="c-metro" class="chart"></div></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><div id="c-yoylga" class="chart"></div></div>
+        <div class="card"><div id="c-heat" class="chart"></div></div>
+      </div>
+    </section>
+    <section class="panel" id="offenders">
+      <p class="callout">Alleged offender incidents are not unique people and are not proven offences. Youth is CSA ages 10–17. Sex shares use known sex only (Males / Females).</p>
+      <div class="grid g2">
+        <div class="card tall"><div id="c-offtrend" class="chart tall"></div></div>
+        <div class="card tall"><div id="c-youth" class="chart tall"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div id="c-sex" class="chart"></div></div>
+        <div class="card"><div id="c-age" class="chart"></div></div>
+        <div class="card"><div id="c-youthage" class="chart"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div id="c-principal" class="chart"></div></div>
+        <div class="card"><div id="c-charge" class="chart"></div></div>
+        <div class="card"><div id="c-offlga" class="chart"></div></div>
+      </div>
+    </section>
+    <section class="panel" id="national">
+      <p class="callout" id="abs-callout">ABS Recorded Crime – Offenders counts unique alleged offenders proceeded against in a financial year. That is not CSA alleged offender incidents.</p>
+      <div class="kpis" id="abs-kpis"></div>
+      <div class="grid g2">
+        <div class="card tall"><div id="c-abs-states" class="chart tall"></div></div>
+        <div class="card tall"><div id="c-abs-trend" class="chart tall"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div id="c-abs-offence" class="chart"></div></div>
+        <div class="card"><div id="c-abs-youth" class="chart"></div></div>
+        <div class="card"><div id="c-abs-youth-states" class="chart"></div></div>
+      </div>
+      <div class="card" style="min-height:auto;padding:16px;" id="abs-note"></div>
+    </section>
+    <section class="panel" id="quality">
+      <div class="quality-grid">
+        <div class="score-card" id="score-card"></div>
+        <div class="card" style="min-height:auto;padding:18px;">
+          <table class="quality" id="quality-table"></table>
+          <div class="sources" id="sources"></div>
+        </div>
+      </div>
+      <div class="card" style="min-height:auto;padding:18px;margin-top:14px;" id="notes"></div>
+    </section>
+  </main>
+  <footer>
+    Sources: Crime Statistics Agency (Victoria), year ending March 2026, published 19 June 2026; Australian Bureau of Statistics, Recorded Crime – Offenders, 2024–25, published 18 March 2026. Licensed under Creative Commons Attribution 4.0.
+    CSA offences, incidents and alleged offender incidents are separate official products. ABS unique offenders are a different product and period.
+    This is an aggregate public-sector analytics dashboard. It does not identify individuals.
+  </footer>
+  <script type="application/json" id="dashboard-data">__DASHBOARD_DATA__</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById("dashboard-data").textContent);
+    const P = DATA.palette;
+    const yearSel = document.getElementById("year");
+    const geoSel = document.getElementById("geo");
+    const layoutBase = () => ({
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "IBM Plex Sans, sans-serif", color: P.navy, size: 11 },
+      margin: { t: 48, r: 20, b: 52, l: 58 },
+      title: { font: { family: "Fraunces, Georgia, serif", size: 16, color: P.navy }, x: 0.01, xanchor: "left" },
+      legend: { orientation: "h", y: -0.2, font: { size: 11 }, bgcolor: "rgba(0,0,0,0)" },
+      hoverlabel: { bgcolor: "#0E2140", font: { size: 12, color: "white" }, bordercolor: P.gold },
+      xaxis: { gridcolor: "#F0E8DA", zeroline: false, linecolor: "#E4D8C6", tickfont: { color: "#6D7784", size: 10 } },
+      yaxis: { gridcolor: "#F0E8DA", zeroline: false, linecolor: "#E4D8C6", separatethousands: true, tickfont: { color: "#6D7784", size: 10 } }
+    });
+    const cfg = { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["lasso2d", "select2d"] };
+
+    function fmt(n) { return n == null || Number.isNaN(n) ? "—" : Math.round(n).toLocaleString("en-AU"); }
+    function fmt1(n) { return n == null || Number.isNaN(n) ? "—" : Number(n).toLocaleString("en-AU", { maximumFractionDigits: 1, minimumFractionDigits: 1 }); }
+    function fmtPct(n) {
+      if (n == null || Number.isNaN(n)) return "—";
+      const sign = n > 0 ? "+" : "";
+      return sign + Number(n).toFixed(1) + "%";
+    }
+    function year() { return Number(yearSel.value); }
+    function geo() { return geoSel.value; }
+    function rowsYear(rows, y) { return rows.filter(r => r.year === y); }
+    function lgasFiltered() {
+      const y = year();
+      return DATA.lgas.filter(r => r.year === y && (geo() === "All" || r.metro_regional === geo()));
+    }
+    function deltaClass(v) {
+      if (v == null) return "flat";
+      if (Math.abs(v) < 0.05) return "flat";
+      return v > 0 ? "up" : "down";
+    }
+
+    DATA.offences.forEach(r => yearSel.add(new Option("March " + r.year, r.year)));
+    yearSel.value = String(DATA.meta.latestYear);
+
+    document.getElementById("tabs").addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab");
+      if (!btn) return;
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === btn));
+      document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === btn.dataset.tab));
+      window.dispatchEvent(new Event("resize"));
+    });
+    yearSel.addEventListener("change", renderAll);
+    geoSel.addEventListener("change", renderAll);
+
+    function renderKpis() {
+      const y = year();
+      const off = DATA.offences.find(r => r.year === y) || {};
+      const inc = DATA.incidents.find(r => r.year === y) || {};
+      const ofn = DATA.offenders.find(r => r.year === y) || {};
+      const fam = DATA.family.filter(r => r.year === y);
+      const famTotal = fam.reduce((s, r) => s + r.offence_count, 0);
+      const famRel = fam.find(r => String(r.family_incident_flag).toLowerCase().includes("family incident related") && !String(r.family_incident_flag).toLowerCase().startsWith("not"));
+      const famShare = famTotal ? 100 * (famRel ? famRel.offence_count : 0) / famTotal : null;
+      const cards = [
+        { label: "Recorded offences", value: fmt(off.offence_count), delta: fmtPct(off.offence_count_yoy_pct) + " on previous year", cls: deltaClass(off.offence_count_yoy_pct), hint: "Victoria-wide" },
+        { label: "Offence rate", value: fmt1(off.rate_per_100000), delta: "per 100,000 population", cls: "flat", hint: "Use rates to compare places" },
+        { label: "Criminal incidents", value: fmt(inc.incident_count), delta: fmtPct(inc.incident_count_yoy_pct) + " on previous year", cls: deltaClass(inc.incident_count_yoy_pct), hint: "Not the same as offences" },
+        { label: "Alleged offender incidents", value: fmt(ofn.alleged_offender_incidents), delta: fmtPct(ofn.alleged_offender_incidents_yoy_pct) + " on previous year", cls: deltaClass(ofn.alleged_offender_incidents_yoy_pct), hint: "Not unique people" },
+        { label: "Family-incident related", value: famShare == null ? "—" : famShare.toFixed(1) + "%", delta: "of recorded offences", cls: "flat", hint: "Flag available from 2021" },
+        { label: "Data quality", value: (DATA.qualityScores.overall).toFixed(1) + "%", delta: "loaded CSA tables", cls: "flat", hint: "Completeness, validity, uniqueness" }
+      ];
+      document.getElementById("kpis").innerHTML = cards.map(c => `
+        <article class="kpi">
+          <div class="label">${c.label}</div>
+          <div class="value">${c.value}</div>
+          <div class="delta ${c.cls}">${c.delta}</div>
+          <div class="hint">${c.hint}</div>
+        </article>`).join("");
+    }
+
+    function renderTrend() {
+      const off = DATA.offences;
+      Plotly.react("c-trend", [
+        { x: off.map(r => r.year), y: off.map(r => r.offence_count), name: "Recorded offences", type: "scatter", mode: "lines+markers", line: { color: P.navy, width: 3 }, marker: { size: 7 } },
+        { x: off.map(r => r.year), y: off.map(r => r.offence_count_3yr_avg), name: "3-year average", type: "scatter", mode: "lines", line: { color: P.gold, width: 2, dash: "dot" } },
+        { x: off.map(r => r.year), y: off.map(r => r.rate_per_100000), name: "Rate per 100,000", type: "scatter", mode: "lines+markers", yaxis: "y2", line: { color: P.teal, width: 2 }, marker: { size: 6 } }
+      ], Object.assign(layoutBase(), {
+        title: "Statewide recorded offences and rate",
+        yaxis: Object.assign({}, layoutBase().yaxis, { title: "Offences" }),
+        yaxis2: { overlaying: "y", side: "right", title: "Rate", gridcolor: "rgba(0,0,0,0)", zeroline: false },
+        margin: { t: 42, r: 58, b: 56, l: 62 }
+      }), cfg);
+    }
+
+    function renderProducts() {
+      Plotly.react("c-products", [
+        { x: DATA.products.map(r => r.year), y: DATA.products.map(r => r.recorded_offences), name: "Recorded offences", type: "scatter", mode: "lines+markers", line: { color: P.navy, width: 3 } },
+        { x: DATA.products.map(r => r.year), y: DATA.products.map(r => r.criminal_incidents), name: "Criminal incidents", type: "scatter", mode: "lines+markers", line: { color: P.teal, width: 3 } },
+        { x: DATA.products.map(r => r.year), y: DATA.products.map(r => r.alleged_offender_incidents), name: "Alleged offender incidents", type: "scatter", mode: "lines+markers", line: { color: P.rust, width: 3 } }
+      ], Object.assign(layoutBase(), { title: "Three official products, not one crime count" }), cfg);
+    }
+
+    function renderYoy() {
+      const rows = DATA.offences.filter(r => r.offence_count_yoy_pct != null);
+      const colors = rows.map(r => r.offence_count_yoy_pct >= 0 ? P.rust : P.green);
+      Plotly.react("c-yoy", [{
+        x: rows.map(r => r.year), y: rows.map(r => r.offence_count_yoy_pct), type: "bar",
+        marker: { color: colors }, name: "YoY %",
+        hovertemplate: "%{x}: %{y:.1f}%<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "Year-on-year change in recorded offences", yaxis: Object.assign({}, layoutBase().yaxis, { ticksuffix: "%" }), showlegend: false }), cfg);
+    }
+
+    function renderMix() {
+      const rows = rowsYear(DATA.divisions, year()).sort((a, b) => b.offence_count - a.offence_count);
+      Plotly.react("c-mix", [{
+        type: "pie", hole: 0.55, labels: rows.map(r => r.offence_division.replace(/^[A-F] /, "")),
+        values: rows.map(r => r.offence_count),
+        marker: { colors: rows.map(r => DATA.divisionColours[r.offence_division] || P.slate) },
+        textinfo: "percent", insidetextfont: { size: 11 }
+      }], Object.assign(layoutBase(), { title: "Offence composition, " + year(), margin: { t: 42, r: 10, b: 20, l: 10 }, showlegend: true, legend: { font: { size: 10 }, y: -0.1 } }), cfg);
+    }
+
+    function renderDivTrend() {
+      const traces = Object.keys(DATA.divisionColours).map(div => {
+        const rows = DATA.divisions.filter(r => r.offence_division === div);
+        return { x: rows.map(r => r.year), y: rows.map(r => r.offence_count), name: div.replace(/^[A-F] /, ""), type: "scatter", mode: "lines", line: { color: DATA.divisionColours[div], width: 2 } };
+      });
+      Plotly.react("c-divtrend", traces, Object.assign(layoutBase(), { title: "Offence divisions over time", legend: { font: { size: 10 }, y: -0.22 } }), cfg);
+    }
+
+    function renderInv() {
+      const rows = rowsYear(DATA.investigation, year());
+      Plotly.react("c-inv", [{
+        type: "bar", orientation: "h",
+        y: rows.map(r => r.investigation_status).reverse(),
+        x: rows.map(r => r.offence_count).reverse(),
+        marker: { color: P.navy },
+        hovertemplate: "%{y}: %{x:,}<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "Investigation status, " + year(), margin: { t: 42, r: 18, b: 40, l: 140 }, showlegend: false }), cfg);
+    }
+
+    function renderFamily() {
+      const related = DATA.family.filter(r => String(r.family_incident_flag).toLowerCase() === "family incident related");
+      const notRel = DATA.family.filter(r => String(r.family_incident_flag).toLowerCase().startsWith("not"));
+      Plotly.react("c-family", [
+        { x: related.map(r => r.year), y: related.map(r => r.offence_count), name: "Family incident related", type: "bar", marker: { color: P.rust } },
+        { x: notRel.map(r => r.year), y: notRel.map(r => r.offence_count), name: "Not family related", type: "bar", marker: { color: P.navy } }
+      ], Object.assign(layoutBase(), { title: "Family-incident flag on recorded offences", barmode: "stack" }), cfg);
+    }
+
+    function renderMap() {
+      const rows = DATA.lgaMap.filter(r => r.year === year() && (geo() === "All" || r.metro_regional === geo()));
+      const sizes = rows.map(r => Math.max(7, Math.sqrt(r.recorded_offences || 0) / 4.2));
+      Plotly.react("c-map", [{
+        type: "scattergeo",
+        lon: rows.map(r => r.Longitude),
+        lat: rows.map(r => r.Latitude),
+        text: rows.map(r => r.local_government_area),
+        marker: {
+          size: sizes, color: rows.map(r => r.recorded_offences_rate),
+          colorscale: [[0, "#D6E4EA"], [0.5, P.teal], [1, P.navy]],
+          cmin: 0, colorbar: { title: "Rate", thickness: 12, len: 0.7 },
+          line: { color: "white", width: 0.6 }
+        },
+        hovertemplate: "<b>%{text}</b><br>Offences: %{customdata[0]:,}<br>Rate: %{marker.color:.1f}<extra></extra>",
+        customdata: rows.map(r => [r.recorded_offences])
+      }], Object.assign(layoutBase(), {
+        title: "LGA recorded-offence rate, " + year(),
+        margin: { t: 42, r: 8, b: 8, l: 8 },
+        geo: {
+          scope: "world", projection: { type: "mercator" },
+          lataxis: { range: [-39.35, -33.85] }, lonaxis: { range: [140.7, 150.1] },
+          showland: true, landcolor: "#F2EBE0", showocean: true, oceancolor: "#F7F8FA",
+          showcountries: false, showlakes: false, coastlinecolor: "#C5CDD4", bgcolor: "rgba(0,0,0,0)",
+          showframe: false
+        }
+      }), cfg);
+    }
+
+    function rankChart(id, rows, xField, title, color) {
+      const top = [...rows].sort((a, b) => b[xField] - a[xField]).slice(0, 12).reverse();
+      Plotly.react(id, [{
+        type: "bar", orientation: "h",
+        y: top.map(r => r.local_government_area),
+        x: top.map(r => r[xField]),
+        marker: { color },
+        hovertemplate: "%{y}: %{x:,.1f}<extra></extra>"
+      }], Object.assign(layoutBase(), { title, margin: { t: 42, r: 18, b: 40, l: 130 }, showlegend: false }), cfg);
+    }
+
+    function renderGeoCharts() {
+      const rows = lgasFiltered();
+      rankChart("c-rates", rows, "recorded_offences_rate", "Highest recorded-offence rates", P.teal);
+      rankChart("c-counts", rows, "recorded_offences", "Highest recorded-offence counts", P.navy);
+      Plotly.react("c-scatter", [{
+        x: rows.map(r => r.recorded_offences),
+        y: rows.map(r => r.recorded_offences_rate),
+        text: rows.map(r => r.local_government_area),
+        mode: "markers", type: "scatter",
+        marker: { size: 9, color: rows.map(r => r.metro_regional === "Metropolitan" ? P.navy : P.gold), line: { color: "white", width: 0.6 } },
+        hovertemplate: "<b>%{text}</b><br>Count: %{x:,}<br>Rate: %{y:.1f}<extra></extra>"
+      }], Object.assign(layoutBase(), {
+        title: "Count versus rate by LGA",
+        xaxis: Object.assign({}, layoutBase().xaxis, { title: "Recorded offences" }),
+        yaxis: Object.assign({}, layoutBase().yaxis, { title: "Rate per 100,000" }),
+        showlegend: false
+      }), cfg);
+      const metro = DATA.metro;
+      Plotly.react("c-metro", [
+        { x: metro.filter(r => r.metro_regional === "Metropolitan").map(r => r.year), y: metro.filter(r => r.metro_regional === "Metropolitan").map(r => r.offence_count), name: "Metropolitan", type: "scatter", mode: "lines+markers", line: { color: P.navy, width: 3 } },
+        { x: metro.filter(r => r.metro_regional === "Regional").map(r => r.year), y: metro.filter(r => r.metro_regional === "Regional").map(r => r.offence_count), name: "Regional", type: "scatter", mode: "lines+markers", line: { color: P.gold, width: 3 } }
+      ], Object.assign(layoutBase(), { title: "Metropolitan and regional recorded offences" }), cfg);
+      const yoy = DATA.lgaYoy.filter(r => r.year === year() && (geo() === "All" || r.metro_regional === geo())).sort((a, b) => b.yoy_pct - a.yoy_pct).slice(0, 12).reverse();
+      Plotly.react("c-yoylga", [{
+        type: "bar", orientation: "h",
+        y: yoy.map(r => r.local_government_area),
+        x: yoy.map(r => r.yoy_pct),
+        marker: { color: yoy.map(r => r.yoy_pct >= 0 ? P.rust : P.green) },
+        hovertemplate: "%{y}: %{x:.1f}%<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "Largest LGA year-on-year changes, " + year(), margin: { t: 42, r: 18, b: 40, l: 130 }, showlegend: false, xaxis: Object.assign({}, layoutBase().xaxis, { ticksuffix: "%" }) }), cfg);
+      const topNames = [...rows].sort((a, b) => b.recorded_offences - a.recorded_offences).slice(0, 12).map(r => r.local_government_area);
+      const heatRows = DATA.heatmap.filter(r => r.year === year() && topNames.includes(r.local_government_area));
+      const heatLgas = topNames;
+      const heatDivs = [...new Set(heatRows.map(r => r.offence_division))];
+      const z = heatLgas.map(lga => heatDivs.map(div => {
+        const hit = heatRows.find(r => r.local_government_area === lga && r.offence_division === div);
+        return hit ? hit.offence_count : 0;
+      }));
+      Plotly.react("c-heat", [{
+        type: "heatmap", y: heatLgas, x: heatDivs.map(d => d.replace(/^[A-F] /, "")), z,
+        colorscale: [[0, "#F4F1EA"], [0.5, "#8AA8B3"], [1, P.navy]],
+        hovertemplate: "%{y}<br>%{x}: %{z:,}<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "Offence mix, highest-count LGAs", margin: { t: 42, r: 18, b: 80, l: 110 } }), cfg);
+    }
+
+    function renderOffenders() {
+      const y = year();
+      Plotly.react("c-offtrend", [
+        { x: DATA.offenders.map(r => r.year), y: DATA.offenders.map(r => r.alleged_offender_incidents), name: "Alleged offender incidents", type: "scatter", mode: "lines+markers", line: { color: P.rust, width: 3 }, marker: { size: 7 } }
+      ], Object.assign(layoutBase(), { title: "Alleged offender incidents over time" }), cfg);
+      const youth = DATA.youthAdult.filter(r => r.age_band.startsWith("Youth"));
+      const adult = DATA.youthAdult.filter(r => r.age_band.startsWith("Adult"));
+      Plotly.react("c-youth", [
+        { x: adult.map(r => r.year), y: adult.map(r => r.alleged_offender_incidents), name: "Adult (18+)", type: "scatter", mode: "lines+markers", line: { color: P.navy, width: 3 } },
+        { x: youth.map(r => r.year), y: youth.map(r => r.alleged_offender_incidents), name: "Youth (10–17)", type: "scatter", mode: "lines+markers", line: { color: P.gold, width: 3 } }
+      ], Object.assign(layoutBase(), { title: "Youth versus adult alleged offender incidents" }), cfg);
+      const sex = DATA.sex.filter(r => r.year === y);
+      Plotly.react("c-sex", [{
+        type: "pie", hole: 0.58, labels: sex.map(r => r.sex), values: sex.map(r => r.alleged_offender_incidents),
+        marker: { colors: [P.navy, P.teal] }, textinfo: "label+percent"
+      }], Object.assign(layoutBase(), { title: "Known sex, " + y, showlegend: false, margin: { t: 42, r: 10, b: 20, l: 10 } }), cfg);
+      const ageOrder = ["10-11 years","12-14 years","15-17 years","18-19 years","20-24 years","25-29 years","30-34 years","35-39 years","40-44 years","45-49 years","50-54 years","55-59 years","60-64 years","65-69 years","70-74 years","75 years and over"];
+      const ageRows = DATA.ageSex.filter(r => r.year === y && r.age_group !== "Organisations");
+      const ageSum = ageOrder.map(g => ageRows.filter(r => r.age_group === g).reduce((s, r) => s + r.alleged_offender_incidents, 0));
+      Plotly.react("c-age", [{
+        type: "bar", x: ageSum, y: ageOrder, orientation: "h", marker: { color: P.teal }
+      }], Object.assign(layoutBase(), { title: "Age group, " + y, margin: { t: 42, r: 18, b: 40, l: 120 }, showlegend: false }), cfg);
+      const ya = DATA.youthAge.filter(r => r.year === y);
+      const ages = [...new Set(ya.map(r => String(r.age_group)))].sort();
+      Plotly.react("c-youthage", [
+        { x: ages, y: ages.map(a => ya.filter(r => String(r.age_group) === a && r.sex === "Males").reduce((s, r) => s + r.alleged_offender_incidents, 0)), name: "Males", type: "bar", marker: { color: P.navy } },
+        { x: ages, y: ages.map(a => ya.filter(r => String(r.age_group) === a && r.sex === "Females").reduce((s, r) => s + r.alleged_offender_incidents, 0)), name: "Females", type: "bar", marker: { color: P.teal } }
+      ], Object.assign(layoutBase(), { title: "Youth single year of age, " + y, barmode: "stack" }), cfg);
+      const prin = DATA.principal.filter(r => r.year === y)
+        .sort((a, b) => b.alleged_offender_incidents - a.alleged_offender_incidents)
+        .slice(0, 10).reverse();
+      Plotly.react("c-principal", [{
+        type: "bar", orientation: "h", y: prin.map(r => r.offence_subdivision), x: prin.map(r => r.alleged_offender_incidents), marker: { color: P.navy }
+      }], Object.assign(layoutBase(), { title: "Principal alleged-offender offences, " + y, margin: { t: 42, r: 18, b: 40, l: 150 }, showlegend: false }), cfg);
+      const ch = DATA.charge.filter(r => r.year === y);
+      Plotly.react("c-charge", [{
+        type: "pie", hole: 0.55, labels: ch.map(r => r.charge_status), values: ch.map(r => r.incident_count),
+        marker: { colors: [P.gold, P.teal, P.navy] }, textinfo: "label+percent"
+      }], Object.assign(layoutBase(), { title: "Criminal incident charge status, " + y, showlegend: false, margin: { t: 42, r: 10, b: 20, l: 10 } }), cfg);
+      const offLga = DATA.offenderLgas.filter(r => r.year === y && (geo() === "All" || r.metro_regional === geo()));
+      rankChart("c-offlga", offLga, "rate_per_100000", "Highest alleged-offender rates", P.rust);
+    }
+
+    function renderNational() {
+      if (!DATA.absCompare) return;
+      const c = DATA.absCompare;
+      const note = DATA.absProductNote || {};
+      document.getElementById("abs-callout").textContent = DATA.meta.absCaveat || document.getElementById("abs-callout").textContent;
+      const cards = [
+        { label: "ABS Victoria offenders", value: fmt(c.victoria_offenders), delta: fmtPct(c.victoria_yoy_count_pct) + " on 2023–24", cls: deltaClass(c.victoria_yoy_count_pct), hint: "Unique offenders, 2024–25" },
+        { label: "ABS Victoria rate", value: fmt1(c.victoria_rate), delta: c.victoria_rate_vs_australia_pct + "% of Australian rate", cls: "flat", hint: "Per 100,000 aged 10+" },
+        { label: "ABS Australia rate", value: fmt1(c.australia_rate), delta: fmt(c.australia_offenders) + " offenders nationally", cls: "flat", hint: "Per 100,000 aged 10+" },
+        { label: "ABS Victoria youth 10–17", value: fmt(c.victoria_youth_offenders), delta: c.victoria_youth_share_pct + "% of Victorian offenders", cls: "flat", hint: "Not CSA youth incidents" },
+        { label: "Victoria share of Australia", value: c.victoria_share_of_australia_pct + "%", delta: "of ABS unique offenders", cls: "flat", hint: "Lowest rate of the six states" },
+        { label: "CSA alleged offender incidents", value: fmt(note.csa_measure), delta: "Year ending March 2026", cls: "flat", hint: "Not comparable with ABS" }
+      ];
+      document.getElementById("abs-kpis").innerHTML = cards.map(card => `
+        <article class="kpi">
+          <div class="label">${card.label}</div>
+          <div class="value">${card.value}</div>
+          <div class="delta ${card.cls}">${card.delta}</div>
+          <div class="hint">${card.hint}</div>
+        </article>`).join("");
+      const states = [...DATA.absStates].sort((a, b) => a.rate_per_100000_age_10_plus - b.rate_per_100000_age_10_plus);
+      Plotly.react("c-abs-states", [{
+        type: "bar", orientation: "h",
+        y: states.map(r => r.jurisdiction),
+        x: states.map(r => r.rate_per_100000_age_10_plus),
+        marker: { color: states.map(r => r.jurisdiction === "Victoria" ? P.gold : (r.jurisdiction === "Australia" ? P.teal : P.navy)) },
+        customdata: states.map(r => [r.offender_count]),
+        hovertemplate: "<b>%{y}</b><br>Rate: %{x:.1f}<br>Offenders: %{customdata[0]:,}<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "ABS offender rate per 100,000 aged 10+, 2024–25", margin: { t: 42, r: 18, b: 40, l: 170 }, showlegend: false }), cfg);
+      Plotly.react("c-abs-trend", [
+        { x: DATA.absVicTrend.map(r => r.financial_year), y: DATA.absVicTrend.map(r => r.rate_per_100000_age_10_plus), name: "Victoria rate", type: "scatter", mode: "lines+markers", line: { color: P.gold, width: 3 } },
+        { x: DATA.absAusTrend.map(r => r.financial_year), y: DATA.absAusTrend.map(r => r.rate_per_100000_age_10_plus), name: "Australia rate", type: "scatter", mode: "lines+markers", line: { color: P.navy, width: 3 } }
+      ], Object.assign(layoutBase(), {
+        title: "ABS offender rates, 2008–09 to 2024–25",
+        yaxis: Object.assign({}, layoutBase().yaxis, { title: "Rate per 100,000 aged 10+" }),
+        xaxis: Object.assign({}, layoutBase().xaxis, { tickangle: -45 }),
+        margin: { t: 42, r: 20, b: 80, l: 58 }
+      }), cfg);
+      const prin = [...DATA.absPrincipal].sort((a, b) => a.offender_count - b.offender_count);
+      Plotly.react("c-abs-offence", [{
+        type: "bar", orientation: "h",
+        y: prin.map(r => r.principal_offence),
+        x: prin.map(r => r.offender_count),
+        marker: { color: P.teal },
+        hovertemplate: "%{y}: %{x:,}<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "ABS Victoria principal offence, 2024–25", margin: { t: 42, r: 18, b: 40, l: 170 }, showlegend: false }), cfg);
+      Plotly.react("c-abs-youth", [{
+        x: DATA.absYouthTrend.map(r => r.financial_year),
+        y: DATA.absYouthTrend.map(r => r.offender_count),
+        name: "Victoria youth offenders",
+        type: "scatter", mode: "lines+markers",
+        line: { color: P.rust, width: 3 }
+      }], Object.assign(layoutBase(), {
+        title: "ABS Victoria youth offenders 10–17",
+        xaxis: Object.assign({}, layoutBase().xaxis, { tickangle: -45 }),
+        margin: { t: 42, r: 18, b: 80, l: 58 },
+        showlegend: false
+      }), cfg);
+      const youth = [...DATA.absYouthStates].sort((a, b) => a.youth_offenders - b.youth_offenders);
+      Plotly.react("c-abs-youth-states", [{
+        type: "bar", orientation: "h",
+        y: youth.map(r => r.jurisdiction),
+        x: youth.map(r => r.youth_offenders),
+        marker: { color: youth.map(r => r.jurisdiction === "Victoria" ? P.gold : P.navy) },
+        hovertemplate: "%{y}: %{x:,}<extra></extra>"
+      }], Object.assign(layoutBase(), { title: "ABS youth offenders by jurisdiction, 2024–25", margin: { t: 42, r: 18, b: 40, l: 170 }, showlegend: false }), cfg);
+      document.getElementById("abs-note").innerHTML = `
+        <p class="kicker">Do not compare CSA incidents with ABS offenders</p>
+        <p style="margin:8px 0;color:var(--navy)"><strong>${note.csa_product}</strong>, ${note.csa_period}: ${fmt(note.csa_measure)}.</p>
+        <p style="margin:8px 0;color:var(--navy)"><strong>${note.abs_product}</strong>, ${note.abs_period}: ${fmt(note.abs_measure)}.</p>
+        <p style="margin:8px 0;color:var(--slate)">${note.reason || ""}</p>`;
+    }
+
+    function renderQuality() {
+      const s = DATA.qualityScores;
+      document.getElementById("score-card").innerHTML = `
+        <div class="kicker" style="color:var(--gold)">Loaded-table score</div>
+        <div class="big">${Number(s.overall).toFixed(1)}%</div>
+        <div class="dim-row"><span>Completeness</span><span>${s.completeness}%</span></div>
+        <div class="dim-row"><span>Validity</span><span>${s.validity}%</span></div>
+        <div class="dim-row"><span>Uniqueness</span><span>${s.uniqueness}%</span></div>
+        <div class="dim-row"><span>Consistency</span><span>${s.consistency}%</span></div>
+        <div class="dim-row"><span>Timeliness</span><span>${s.timeliness}%</span></div>
+        <p style="font-size:12px;color:#C5D0DC;margin:14px 0 0;">Measures ingested CSA and ABS tables, not recording practice. CSA ${DATA.meta.publicationDate}. ABS ${DATA.meta.absPublicationDate || "18 March 2026"}.</p>`;
+      document.getElementById("quality-table").innerHTML = `
+        <thead><tr><th>Table</th><th>Rows</th><th>Missing</th><th>Negatives</th><th>Duplicate keys</th><th>Years</th><th>Score</th></tr></thead>
+        <tbody>${DATA.quality.map(r => `<tr>
+          <td>${r.table_name}</td><td>${fmt(r.row_count)}</td><td>${r.missing_count}</td>
+          <td>${r.negative_count}</td><td>${r.duplicate_keys}</td>
+          <td>${r.min_year}–${r.max_year}</td><td><span class="pill">${Number(r.score_overall).toFixed(1)}%</span></td>
+        </tr>`).join("")}</tbody>`;
+      document.getElementById("sources").innerHTML = DATA.meta.catalogue.map(c => `<a href="${c.url}" target="_blank" rel="noreferrer">${c.name}</a>`).join("");
+      document.getElementById("notes").innerHTML = `<p class="kicker">Analytical notes</p>` + DATA.meta.notes.map(n => `<p style="margin:8px 0;color:var(--navy)">${n}</p>`).join("");
+    }
+
+    function renderAll() {
+      renderKpis();
+      renderTrend();
+      renderProducts();
+      renderYoy();
+      renderMix();
+      renderDivTrend();
+      renderInv();
+      renderFamily();
+      renderMap();
+      renderGeoCharts();
+      renderOffenders();
+      renderNational();
+      renderQuality();
+    }
+    renderAll();
+  </script>
+</body>
+</html>
