@@ -20,7 +20,7 @@ Recorded offences, criminal incidents, alleged offender incidents and ABS unique
 | Streamlit data requests | `app/streamlit_app.py` |
 | Tableau Public dashboards | `dashboard/tableau-public/` |
 | Optional MySQL star schema | `docker-compose.yml`, `sql/schema.sql`, `src/database/load_data.py` |
-| Documentation | `docs/architecture.md`, `data_dictionary.md`, `methodology.md`, `data_quality.md` |
+| Documentation | `docs/architecture.md`, `data_dictionary.md`, `methodology.md`, `data_quality.md`, `ethics_governance_and_decisions.md` |
 | Tests | `tests/test_transformations.py`, `tests/test_stage3.py` |
 
 ## Data sources and download links
@@ -131,9 +131,11 @@ PYTHONPATH=. python -m src.database.load_data
 
 See `docs/architecture.md` and `docs/methodology.md`.
 
-## Data governance
+## Data ethics and governance
 
-See `docs/data_governance.md`. Aggregate statistics only. Do not identify individuals.
+See `docs/ethics_governance_and_decisions.md` for the executive summary, business questions, north-star metrics, Tableau-linked findings and the recommendation matrix.
+
+See `docs/data_governance.md` for the short operating rules. Aggregate statistics only. Do not identify individuals.
 
 ## Author
 
