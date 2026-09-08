@@ -25,12 +25,13 @@ data/*
 *.sqlite
 *.sqlite3
 
-# Generated analysis outputs
-reports/generated/
+# Generated reports, except published figures used in the README
+reports/generated/*
+!reports/generated/figures/
+!reports/generated/figures/*.png
+
+# Tableau CSV extracts stay local; the HTML dashboard and workbook are published
 dashboard/tableau-public/data/
-dashboard/tableau-public/*.html
-dashboard/tableau-public/*.twb
-dashboard/tableau-public/*.twbx
 
 # Editor and local prompt notes
 docs/CURSOR_PROMPT.md
